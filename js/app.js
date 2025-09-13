@@ -1,3 +1,4 @@
+
 // app.js - versão funcional final com login, sidebar retrátil e gráficos 2x2
 (function(){
   // Firebase config
@@ -44,7 +45,7 @@
     users: document.getElementById('view-users')
   };
 
-  // Chart instances
+  // Chart instances (global)
   let prodChart = null, monthTypeChart = null, comparativeChart = null, hourChart = null;
 
   // Helpers
@@ -55,8 +56,20 @@
     return raw+'@movebuss.local';
   }
   function formatBR(d){ const dt=new Date(d); return dt.toLocaleDateString('pt-BR'); }
-  function weekStart(d){ const date=new Date(d); const day=date.getDay(); const diff=(day===0)? -6 : 1-day; date.setDate(date.getDate()+diff); date.setHours(0,0,0,0); return date; }
-  function weekEndInc(ws){ const e=new Date(ws); e.setDate(ws.getDate()+6); e.setHours(23,59,59,999); return e; }
+  function weekStart(d){ 
+    const date=new Date(d); 
+    const day=date.getDay(); 
+    const diff=(day===0)? -6 : 1-day; 
+    date.setDate(date.getDate()+diff); 
+    date.setHours(0,0,0,0); 
+    return date; 
+  }
+  function weekEndInc(ws){ 
+    const e=new Date(ws); 
+    e.setDate(ws.getDate()+6); 
+    e.setHours(23,59,59,999); 
+    return e; 
+  }
   function prefixBadgeClass(p){
     const num=parseInt(p,10);
     if(num>=55001 && num<=55184) return 'flag-green';
@@ -117,24 +130,34 @@
     if(btn.dataset.view==='users'){ loadUsers(); }
   }));
 
-  // Lançamento: inputs
+  // Lançamento inputs
   const inPrefix = document.getElementById('inPrefix');
   const inDate = document.getElementById('inDate');
   const btnSalvar = document.getElementById('btnSalvar');
   const btnLimpar = document.getElementById('btnLimpar');
   const typeBtns = document.querySelectorAll('#typeButtons .type-btn');
   let selectedType = 'Lavagem Simples';
-  typeBtns.forEach(b=> b.addEventListener('click', ()=>{ typeBtns.forEach(x=>x.classList.remove('selected')); b.classList.add('selected'); selectedType = b.dataset.type; }));
+  typeBtns.forEach(b=> b.addEventListener('click', ()=>{
+    typeBtns.forEach(x=>x.classList.remove('selected'));
+    b.classList.add('selected');
+    selectedType = b.dataset.type;
+  }));
   inDate.value = new Date().toISOString().slice(0,10);
 
   btnSalvar.addEventListener('click', async ()=>{
     const suff = inPrefix.value.trim();
     if(!/^\d{3}$/.test(suff)){ alert('Prefixo deve ter 3 dígitos'); return; }
     const full = '55'+suff;
-    const dt = inDate.value ? new Date(inDate.value) : new Date();
+    const dt = inDate.value ? new Date(inDate.value + 'T12:00:00') : new Date(); // corrige timezone
     try{
-      await db.collection('relatorios').add({ prefixo: full, tipo: selectedType, data: firebase.firestore.Timestamp.fromDate(dt), createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-      inPrefix.value=''; inDate.value=new Date().toISOString().slice(0,10);
+      await db.collection('relatorios').add({
+        prefixo: full,
+        tipo: selectedType,
+        data: firebase.firestore.Timestamp.fromDate(dt),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      inPrefix.value=''; 
+      inDate.value=new Date().toISOString().slice(0,10);
       await refreshAll();
     }catch(e){ alert('Erro ao salvar: '+e.message); }
   });
@@ -145,14 +168,29 @@
     const el = document.getElementById('prefixLowList');
     el.innerHTML = '<em>Carregando...</em>';
     const prefixes=[]; for(let i=1;i<=559;i++) prefixes.push(String(i).padStart(3,'0')); for(let i=900;i<=1000;i++) prefixes.push(String(i).padStart(3,'0'));
-    const now=new Date(); const ws=weekStart(now); const we=weekEndInc(ws);
-    const snap = await db.collection('relatorios').where('createdAt','>=', firebase.firestore.Timestamp.fromDate(ws)).where('createdAt','<', firebase.firestore.Timestamp.fromDate(we)).get();
-    const counts={}; snap.forEach(s=>{ const v=s.data(); counts[v.prefixo]=(counts[v.prefixo]||0)+1; });
+    const now=new Date(); 
+    const ws=weekStart(now); 
+    const we=weekEndInc(ws);
+    const snap = await db.collection('relatorios')
+      .where('createdAt','>=', firebase.firestore.Timestamp.fromDate(ws))
+      .where('createdAt','<', firebase.firestore.Timestamp.fromDate(we))
+      .get();
+    const counts={}; 
+    snap.forEach(s=>{ const v=s.data(); counts[v.prefixo]=(counts[v.prefixo]||0)+1; });
     el.innerHTML='';
-    prefixes.forEach(p=>{ const full='55'+p; const c=counts[full]||0; if(c<2){ const div=document.createElement('div'); const cls=prefixBadgeClass(parseInt(full)); div.innerHTML = `<div>${full}</div><div class="badge ${cls}"></div><div class="small muted">(${c} lav.)</div>`; el.appendChild(div);} });
+    prefixes.forEach(p=>{
+      const full='55'+p; 
+      const c=counts[full]||0; 
+      if(c<2){ 
+        const div=document.createElement('div'); 
+        const cls=prefixBadgeClass(parseInt(full)); 
+        div.innerHTML = `<div>${full}</div><div class="badge ${cls}"></div><div class="small muted">(${c} lav.)</div>`; 
+        el.appendChild(div);
+      }
+    });
   }
 
-  // WEEKLY report - CORRIGIDO
+  // WEEKLY report
   const fPrefix = document.getElementById('fPrefix');
   const fTipo = document.getElementById('fTipo');
   const fDate = document.getElementById('fDate');
@@ -163,92 +201,100 @@
 
   async function loadWeekly(){
     weeklyTable.innerHTML = '<em>Carregando...</em>';
-    const now = new Date();
-    const ws = weekStart(now);
-    const we = weekEndInc(ws);
-
-    let query = db.collection('relatorios')
-                  .where('data','>=', firebase.firestore.Timestamp.fromDate(ws))
-                  .where('data','<=', firebase.firestore.Timestamp.fromDate(we))
-                  .orderBy('data','desc');
-
-    const snap = await query.get();
-    const rows = [];
-    snap.forEach(d => rows.push({...d.data(), id: d.id}));
-
-    const table = document.createElement('table');
-    table.innerHTML = '<thead><tr><th>Prefixo</th><th>Tipo</th><th>Data</th><th>Hora</th><th>Criado em</th></tr></thead>';
-    const tb = document.createElement('tbody');
-
-    rows.forEach(r => {
-      const d = r.data.toDate();
+    const now=new Date(); 
+    const ws=weekStart(now); 
+    const we=weekEndInc(ws);
+    const q = await db.collection('relatorios')
+      .where('createdAt','>=', firebase.firestore.Timestamp.fromDate(ws))
+      .where('createdAt','<', firebase.firestore.Timestamp.fromDate(we))
+      .orderBy('createdAt','desc')
+      .get();
+    const rows=[]; q.forEach(d=> rows.push({id:d.id, ...d.data()}));
+    const table = document.createElement('table'); 
+    table.innerHTML = '<thead><tr><th>Prefixo</th><th>Tipo</th><th>Data</th><th>Hora</th><th>Criado em</th></tr></thead>'; 
+    const tb=document.createElement('tbody');
+    rows.forEach(r=>{
       if(fPrefix.value && !r.prefixo.includes(fPrefix.value.trim())) return;
-      if(fTipo.value && r.tipo !== fTipo.value) return;
+      if(fTipo.value && r.tipo!==fTipo.value) return;
       if(fDate.value){
-        const f = new Date(fDate.value + 'T00:00:00');
-        if(d.toDateString() !== f.toDateString()) return;
+        const d=r.data.toDate(); 
+        const f=new Date(fDate.value+'T12:00:00'); 
+        d.setHours(0,0,0,0); f.setHours(0,0,0,0); 
+        if(d.getTime()!==f.getTime()) return;
       }
-
-      const created = r.createdAt ? r.createdAt.toDate() : new Date();
-      const horaClass = horaBadgeClass(created.getHours());
-      const tr = document.createElement('tr');
+      const saved = r.createdAt && r.createdAt.toDate ? r.createdAt.toDate() : new Date();
+      const hora = saved.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+      const horaClass = horaBadgeClass(saved.getHours());
+      const tr=document.createElement('tr');
       const pClass = prefixBadgeClass(parseInt(r.prefixo));
       const tClass = typeBadgeClass(r.tipo);
-
       tr.innerHTML = `<td>${r.prefixo}<div class="badge ${pClass}"></div></td>
                       <td>${r.tipo}<div class="badge ${tClass}"></div></td>
-                      <td>${formatBR(d)}</td>
-                      <td><span class="badge ${horaClass}">${created.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</span></td>
-                      <td>${formatBR(created)}</td>`;
+                      <td>${formatBR(r.data.toDate())}</td>
+                      <td><span class="badge ${horaClass}">${hora}</span></td>
+                      <td>${formatBR(saved)}</td>`;
       tb.appendChild(tr);
     });
-
-    table.appendChild(tb);
-    weeklyTable.innerHTML = '';
-    weeklyTable.appendChild(table);
+    table.appendChild(tb); weeklyTable.innerHTML=''; weeklyTable.appendChild(table);
   }
 
   btnApplyWeek.addEventListener('click', loadWeekly);
   btnClearWeek.addEventListener('click', ()=>{ fPrefix.value=''; fTipo.value=''; fDate.value=''; loadWeekly(); });
-
   btnExportWeek.addEventListener('click', async ()=>{
-    const now=new Date(); const ws=weekStart(now); const we=weekEndInc(ws);
-    const q = await db.collection('relatorios').where('data','>=', firebase.firestore.Timestamp.fromDate(ws)).where('data','<=', firebase.firestore.Timestamp.fromDate(we)).get();
-    const data=[]; q.forEach(s=>{ const v=s.data(); data.push({prefixo:v.prefixo,tipo:v.tipo,data:v.data.toDate().toLocaleDateString('pt-BR'),criado:v.createdAt.toDate().toLocaleString('pt-BR')}); });
-    const wsX = XLSX.utils.json_to_sheet(data); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, wsX, 'Semana'); XLSX.writeFile(wb,'relatorio_semana.xlsx');
+    const now=new Date(); 
+    const ws=weekStart(now); 
+    const we=weekEndInc(ws);
+    const q = await db.collection('relatorios')
+      .where('createdAt','>=', firebase.firestore.Timestamp.fromDate(ws))
+      .where('createdAt','<', firebase.firestore.Timestamp.fromDate(we))
+      .get();
+    const data=[]; 
+    q.forEach(s=>{
+      const v=s.data(); 
+      data.push({prefixo:v.prefixo,tipo:v.tipo,data:v.data.toDate().toLocaleDateString('pt-BR'),criado:v.createdAt.toDate().toLocaleString('pt-BR')});
+    });
+    const wsX = XLSX.utils.json_to_sheet(data); 
+    const wb = XLSX.utils.book_new(); 
+    XLSX.utils.book_append_sheet(wb, wsX, 'Semana'); 
+    XLSX.writeFile(wb,'relatorio_semana.xlsx');
   });
 
-  // MONTHLY, CHARTS, USERS, EXPORTS permanecem idênticos ao original
-  // ... (mantido exatamente como antes para não quebrar nada) ...
-
-  async function refreshAll(){
-    await loadLowWash();
-    await loadWeekly();
-    await loadMonthly('');
-    await buildAllCharts();
-  }
-
+  // On auth state change
   auth.onAuthStateChanged(async user=>{
     if(user){
+      // Check role
       let role='user';
       try{
         const doc = await db.collection('usuarios').doc(user.uid).get();
         if(doc.exists && doc.data().role) role = doc.data().role;
       }catch(e){ console.warn(e); }
-      authView.classList.add('hidden'); authView.style.display='none';
-      sidebar.classList.remove('hidden'); main.classList.remove('hidden'); btnLogout.classList.remove('hidden'); btnToggleSidebar.classList.remove('hidden');
+      authView.classList.add('hidden');
+      authView.style.display='none';
+      sidebar.classList.remove('hidden');
+      main.classList.remove('hidden');
+      btnLogout.classList.remove('hidden');
+      btnToggleSidebar.classList.remove('hidden');
       if(role==='admin') adminOnly.classList.remove('hidden'); else adminOnly.classList.add('hidden');
+      // default view
       Object.values(views).forEach(v=> v.classList.add('hidden'));
       views.home.classList.remove('hidden');
       document.querySelectorAll('.nav-btn').forEach(b=> b.classList.remove('active'));
       document.querySelector('.nav-btn[data-view="home"]').classList.add('active');
-      populateWeekFilter();
-      await refreshAll();
+      await refreshAll(); // removida chamada populateWeekFilter
     }else{
-      authView.classList.remove('hidden'); authView.style.display='block';
-      sidebar.classList.add('hidden'); main.classList.add('hidden');
-      btnLogout.classList.add('hidden'); btnToggleSidebar.classList.add('hidden');
+      authView.classList.remove('hidden');
+      authView.style.display='block';
+      sidebar.classList.add('hidden');
+      main.classList.add('hidden');
+      btnLogout.classList.add('hidden');
+      btnToggleSidebar.classList.add('hidden');
     }
   });
+
+  // Refresh all datas & UI
+  async function refreshAll(){
+    await loadLowWash();
+    await loadWeekly();
+  }
 
 })();
