@@ -506,19 +506,19 @@ async function buildComparative() {
   const selected = chosen.length ? chosen.map(i => weeksRef[i]) : weeksRef.slice(-4);
   if (selected.length === 0) return;
 
-  const minStart = selected[0].ws;
-  const maxEnd = selected[selected.length - 1].we;
-
-  const snap = await db.collection('relatorios')
-    .where('createdAt', '>=', firebase.firestore.Timestamp.fromDate(minStart))
-    .where('createdAt', '<=', firebase.firestore.Timestamp.fromDate(maxEnd))
-    .get();
-
-  // Cria mapa com timestamp inicial de cada semana
+  // Map para contar lavagens por semana usando timestamp
   const perWeek = {};
   selected.forEach(w => {
     perWeek[w.ws.getTime()] = 0;
   });
+
+  // Busca dados do Firestore
+  const minStart = selected[0].ws;
+  const maxEnd = selected[selected.length - 1].we;
+  const snap = await db.collection('relatorios')
+    .where('createdAt', '>=', firebase.firestore.Timestamp.fromDate(minStart))
+    .where('createdAt', '<=', firebase.firestore.Timestamp.fromDate(maxEnd))
+    .get();
 
   snap.forEach(s => {
     const dt = s.data().createdAt.toDate();
@@ -540,7 +540,7 @@ async function buildComparative() {
       datasets: [{
         label: 'Lavagens',
         data: data,
-        backgroundColor: '#28a745',
+        backgroundColor: '#28a745', // verde
         barThickness: 16
       }]
     },
@@ -553,11 +553,13 @@ async function buildComparative() {
       plugins: {
         tooltip: {
           callbacks: {
+            title: function(context) {
+              // título do tooltip = intervalo da semana
+              return context[0].label;
+            },
             label: function(context) {
-              // context.dataIndex garante que cada barra pegue o label correto
-              const lbl = context.chart.data.labels[context.dataIndex];
-              const val = context.dataset.data[context.dataIndex];
-              return `${lbl} Lavagens: ${val}`;
+              // valor da barra
+              return `Lavagens: ${context.parsed.y}`;
             }
           }
         }
