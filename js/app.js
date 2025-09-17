@@ -499,10 +499,9 @@ function populateWeekFilter() {
   }
 }
 
-  async function buildComparative() {
+ async function buildComparative() {
   const sel = document.getElementById('weekFilter');
   const chosen = Array.from(sel.selectedOptions).map(o => parseInt(o.value));
-
   const weeksRef = getAvailableWeeks(10);
   const selected = chosen.length ? chosen.map(i => weeksRef[i]) : weeksRef.slice(-4);
   if (selected.length === 0) return;
@@ -510,13 +509,11 @@ function populateWeekFilter() {
   const minStart = selected[0].ws;
   const maxEnd = selected[selected.length - 1].we;
 
-  // Pega todos os dados no período selecionado
   const snap = await db.collection('relatorios')
     .where('createdAt', '>=', firebase.firestore.Timestamp.fromDate(minStart))
     .where('createdAt', '<=', firebase.firestore.Timestamp.fromDate(maxEnd))
     .get();
 
-  // Conta lavagens por semana
   const perWeek = {};
   snap.forEach(s => {
     const v = s.data();
@@ -531,11 +528,8 @@ function populateWeekFilter() {
   const data = labels.map(l => perWeek[l] || 0);
 
   const ctx = document.getElementById('comparativeChart').getContext('2d');
-
-  // Destroi o gráfico anterior, se existir
   if (comparativeChart) comparativeChart.destroy();
 
-  // Cria o gráfico
   comparativeChart = new Chart(ctx, {
     type: 'bar',
     data: {
@@ -543,8 +537,8 @@ function populateWeekFilter() {
       datasets: [{
         label: 'Lavagens',
         data,
-        barThickness: 16,
-        backgroundColor: '#28a745' // verde
+        backgroundColor: '#28a745', // verde
+        barThickness: 16
       }]
     },
     options: {
@@ -556,9 +550,10 @@ function populateWeekFilter() {
       plugins: {
         tooltip: {
           callbacks: {
+            // Aqui o tooltip mostra "intervalo da semana Lavagens: X"
             label: function(context) {
-              const lbl = context.label;    // a semana
-              const val = context.raw;      // quantidade de lavagens
+              const lbl = context.label;
+              const val = context.raw;
               return `${lbl} Lavagens: ${val}`;
             }
           }
