@@ -514,19 +514,26 @@ async function buildComparative() {
     .where('createdAt', '<=', firebase.firestore.Timestamp.fromDate(maxEnd))
     .get();
 
-  // monta os dados por semana
+  // Inicializa counts zerados para cada semana
   const perWeek = {};
+  selected.forEach(w => {
+    perWeek[w.lbl] = 0;
+  });
+
+  // Conta lavagens por semana
   snap.forEach(s => {
     const v = s.data();
     const dt = v.createdAt && v.createdAt.toDate ? v.createdAt.toDate() : new Date();
     const ws = weekStart(dt);
     const we = weekEndInc(ws);
     const lbl = `${ws.toLocaleDateString('pt-BR')} - ${we.toLocaleDateString('pt-BR')}`;
-    perWeek[lbl] = (perWeek[lbl] || 0) + 1;
+    if (perWeek[lbl] !== undefined) {
+      perWeek[lbl] += 1;
+    }
   });
 
   const labels = selected.map(w => w.lbl);
-  const data = labels.map(lbl => perWeek[lbl] || 0);
+  const data = labels.map(lbl => perWeek[lbl]);
 
   const ctx = document.getElementById('comparativeChart').getContext('2d');
   if (comparativeChart) comparativeChart.destroy();
@@ -552,7 +559,6 @@ async function buildComparative() {
         tooltip: {
           callbacks: {
             label: function(context) {
-              // context.label é a label correta da barra
               return `${context.label} Lavagens: ${context.raw}`;
             }
           }
