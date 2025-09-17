@@ -514,26 +514,21 @@ async function buildComparative() {
     .where('createdAt', '<=', firebase.firestore.Timestamp.fromDate(maxEnd))
     .get();
 
-  // Inicializa counts zerados para cada semana
+  // Cria mapa com timestamp inicial de cada semana
   const perWeek = {};
   selected.forEach(w => {
-    perWeek[w.lbl] = 0;
+    perWeek[w.ws.getTime()] = 0;
   });
 
-  // Conta lavagens por semana
   snap.forEach(s => {
-    const v = s.data();
-    const dt = v.createdAt && v.createdAt.toDate ? v.createdAt.toDate() : new Date();
+    const dt = s.data().createdAt.toDate();
     const ws = weekStart(dt);
-    const we = weekEndInc(ws);
-    const lbl = `${ws.toLocaleDateString('pt-BR')} - ${we.toLocaleDateString('pt-BR')}`;
-    if (perWeek[lbl] !== undefined) {
-      perWeek[lbl] += 1;
-    }
+    const wsTime = ws.getTime();
+    if (perWeek.hasOwnProperty(wsTime)) perWeek[wsTime] += 1;
   });
 
   const labels = selected.map(w => w.lbl);
-  const data = labels.map(lbl => perWeek[lbl]);
+  const data = selected.map(w => perWeek[w.ws.getTime()]);
 
   const ctx = document.getElementById('comparativeChart').getContext('2d');
   if (comparativeChart) comparativeChart.destroy();
@@ -545,7 +540,7 @@ async function buildComparative() {
       datasets: [{
         label: 'Lavagens',
         data: data,
-        backgroundColor: '#28a745', // verde
+        backgroundColor: '#28a745',
         barThickness: 16
       }]
     },
@@ -559,7 +554,10 @@ async function buildComparative() {
         tooltip: {
           callbacks: {
             label: function(context) {
-              return `${context.label} Lavagens: ${context.raw}`;
+              // context.dataIndex garante que cada barra pegue o label correto
+              const lbl = context.chart.data.labels[context.dataIndex];
+              const val = context.dataset.data[context.dataIndex];
+              return `${lbl} Lavagens: ${val}`;
             }
           }
         }
