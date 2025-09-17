@@ -506,7 +506,7 @@ async function buildComparative() {
   const selected = chosen.length ? chosen.map(i => weeksRef[i]) : weeksRef.slice(-4);
   if (selected.length === 0) return;
 
-  // Map para contar lavagens por semana usando timestamp
+  // Map para contar lavagens por semana
   const perWeek = {};
   selected.forEach(w => {
     perWeek[w.ws.getTime()] = 0;
@@ -547,24 +547,23 @@ async function buildComparative() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      scales: {
-        y: { beginAtZero: true }
-      },
       plugins: {
-        tooltip: {
-          callbacks: {
-            title: function(context) {
-              // título do tooltip = intervalo da semana
-              return context[0].label;
-            },
-            label: function(context) {
-              // valor da barra
-              return `Lavagens: ${context.parsed.y}`;
-            }
-          }
+        datalabels: {
+          color: 'white',
+          anchor: 'end',
+          align: 'end',
+          font: { weight: 'bold', size: 14 },
+          formatter: (value) => value // exibe o número dentro da barra
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { stepSize: 1 }
         }
       }
-    }
+    },
+    plugins: [ChartDataLabels] // ativa o plugin de datalabels
   });
 }
 
