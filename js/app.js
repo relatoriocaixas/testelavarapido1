@@ -499,7 +499,7 @@ function populateWeekFilter() {
   }
 }
 
- async function buildComparative() {
+async function buildComparative() {
   const sel = document.getElementById('weekFilter');
   const chosen = Array.from(sel.selectedOptions).map(o => parseInt(o.value));
   const weeksRef = getAvailableWeeks(10);
@@ -550,11 +550,10 @@ function populateWeekFilter() {
       plugins: {
         tooltip: {
           callbacks: {
-            // Aqui o tooltip mostra "intervalo da semana Lavagens: X"
             label: function(context) {
-              const lbl = context.label;
-              const val = context.raw;
-              return `${lbl} Lavagens: ${val}`;
+              const value = context.dataset.data[context.dataIndex]; // pega o valor correto
+              const label = context.chart.data.labels[context.dataIndex]; // pega o label correto
+              return `${label} Lavagens: ${value}`;
             }
           }
         }
