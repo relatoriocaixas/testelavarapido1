@@ -412,15 +412,56 @@ btnExportWeek.addEventListener('click', async () => {
     });
   }
 
-  async function buildMonthTypes(){
-    const now=new Date(); const start=new Date(now.getFullYear(),now.getMonth(),1); const end=new Date(now.getFullYear(),now.getMonth()+1,1);
-    const snap = await db.collection('relatorios').where('createdAt','>=', firebase.firestore.Timestamp.fromDate(start)).where('createdAt','<', firebase.firestore.Timestamp.fromDate(end)).get();
-    const counts={'Lavagem Simples':0,'Higienização':0,'Exceções':0};
-    snap.forEach(s=> counts[s.data().tipo]++);
-    const ctx = document.getElementById('monthTypeChart').getContext('2d');
-    if(monthTypeChart) monthTypeChart.destroy();
-    monthTypeChart = new Chart(ctx, { type:'bar', data:{ labels:Object.keys(counts), datasets:[{ data:Object.values(counts) }] }, options:{ responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true } } } });
-  }
+  async function buildMonthTypes() {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), 1);
+  const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+  const snap = await db.collection('relatorios')
+    .where('createdAt', '>=', firebase.firestore.Timestamp.fromDate(start))
+    .where('createdAt', '<', firebase.firestore.Timestamp.fromDate(end))
+    .get();
+
+  const counts = { 'Lavagem Simples': 0, 'Higienização': 0, 'Exceções': 0 };
+  snap.forEach(s => counts[s.data().tipo]++);
+
+  // Define cores iguais às badges
+  const colors = {
+    'Lavagem Simples': '#007bff', // azul
+    'Higienização': '#ffc107',    // amarelo
+    'Exceções': '#dc3545'         // vermelho
+  };
+
+  const ctx = document.getElementById('monthTypeChart').getContext('2d');
+  if (monthTypeChart) monthTypeChart.destroy();
+
+  monthTypeChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: Object.keys(counts),
+      datasets: [{
+        data: Object.values(counts),
+        backgroundColor: Object.keys(counts).map(t => colors[t]) // aplica cores
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: { y: { beginAtZero: true } },
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const tipo = context.label;
+              const val = context.raw;
+              return `${tipo}: ${val}`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
 
 // MULTI-WEEK COMPARATIVE
 function getAvailableWeeks(n = 6) {
@@ -458,25 +499,74 @@ function populateWeekFilter() {
   }
 }
 
-  async function buildComparative(){
-    const sel = document.getElementById('weekFilter'); const chosen = Array.from(sel.selectedOptions).map(o=> parseInt(o.value));
-    const weeksRef = getAvailableWeeks(10);
-    const selected = chosen.length ? chosen.map(i=> weeksRef[i]) : weeksRef.slice(-4);
-    if(selected.length===0) return;
-    const minStart = selected[0].ws; const maxEnd = selected[selected.length-1].we;
-    const snap = await db.collection('relatorios').where('createdAt','>=', firebase.firestore.Timestamp.fromDate(minStart)).where('createdAt','<=', firebase.firestore.Timestamp.fromDate(maxEnd)).get();
-    const perWeek = {};
-    snap.forEach(s=>{
-      const v = s.data(); const dt = v.createdAt && v.createdAt.toDate ? v.createdAt.toDate() : new Date();
-      const ws = weekStart(dt); const we = weekEndInc(ws); const lbl = `${ws.toLocaleDateString('pt-BR')} - ${we.toLocaleDateString('pt-BR')}`;
-      perWeek[lbl] = (perWeek[lbl]||0)+1;
-    });
-    const labels = selected.map(w=> w.lbl);
-    const data = labels.map(l=> perWeek[l]||0);
-    const ctx = document.getElementById('comparativeChart').getContext('2d');
-    if(comparativeChart) comparativeChart.destroy();
-    comparativeChart = new Chart(ctx, { type:'bar', data:{ labels, datasets:[{ label:'Lavagens', data, barThickness:16 }] }, options:{ responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true } } } });
-  }
+  async function buildComparative() {
+  const sel = document.getElementById('weekFilter');
+  const chosen = Array.from(sel.selectedOptions).map(o => parseInt(o.value));
+
+  const weeksRef = getAvailableWeeks(10);
+  const selected = chosen.length ? chosen.map(i => weeksRef[i]) : weeksRef.slice(-4);
+  if (selected.length === 0) return;
+
+  const minStart = selected[0].ws;
+  const maxEnd = selected[selected.length - 1].we;
+
+  // Pega todos os dados no período selecionado
+  const snap = await db.collection('relatorios')
+    .where('createdAt', '>=', firebase.firestore.Timestamp.fromDate(minStart))
+    .where('createdAt', '<=', firebase.firestore.Timestamp.fromDate(maxEnd))
+    .get();
+
+  // Conta lavagens por semana
+  const perWeek = {};
+  snap.forEach(s => {
+    const v = s.data();
+    const dt = v.createdAt && v.createdAt.toDate ? v.createdAt.toDate() : new Date();
+    const ws = weekStart(dt);
+    const we = weekEndInc(ws);
+    const lbl = `${ws.toLocaleDateString('pt-BR')} - ${we.toLocaleDateString('pt-BR')}`;
+    perWeek[lbl] = (perWeek[lbl] || 0) + 1;
+  });
+
+  const labels = selected.map(w => w.lbl);
+  const data = labels.map(l => perWeek[l] || 0);
+
+  const ctx = document.getElementById('comparativeChart').getContext('2d');
+
+  // Destroi o gráfico anterior, se existir
+  if (comparativeChart) comparativeChart.destroy();
+
+  // Cria o gráfico
+  comparativeChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Lavagens',
+        data,
+        barThickness: 16,
+        backgroundColor: '#28a745' // verde
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: { beginAtZero: true }
+      },
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const lbl = context.label;    // a semana
+              const val = context.raw;      // quantidade de lavagens
+              return `${lbl} Lavagens: ${val}`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
 
   // HOUR chart
   async function buildHour(){
