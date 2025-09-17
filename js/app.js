@@ -514,6 +514,7 @@ async function buildComparative() {
     .where('createdAt', '<=', firebase.firestore.Timestamp.fromDate(maxEnd))
     .get();
 
+  // monta os dados por semana
   const perWeek = {};
   snap.forEach(s => {
     const v = s.data();
@@ -525,7 +526,10 @@ async function buildComparative() {
   });
 
   const labels = selected.map(w => w.lbl);
-  const data = labels.map(l => perWeek[l] || 0);
+  const data = labels.map(lbl => ({
+    x: lbl,
+    y: perWeek[lbl] || 0
+  }));
 
   const ctx = document.getElementById('comparativeChart').getContext('2d');
   if (comparativeChart) comparativeChart.destroy();
@@ -536,8 +540,8 @@ async function buildComparative() {
       labels,
       datasets: [{
         label: 'Lavagens',
-        data,
-        backgroundColor: '#28a745', // verde
+        data: data.map(d => d.y),
+        backgroundColor: '#28a745',
         barThickness: 16
       }]
     },
@@ -551,9 +555,9 @@ async function buildComparative() {
         tooltip: {
           callbacks: {
             label: function(context) {
-              const value = context.dataset.data[context.dataIndex]; // pega o valor correto
-              const label = context.chart.data.labels[context.dataIndex]; // pega o label correto
-              return `${label} Lavagens: ${value}`;
+              const lbl = context.chart.data.labels[context.dataIndex];
+              const value = context.dataset.data[context.dataIndex];
+              return `${lbl} Lavagens: ${value}`;
             }
           }
         }
