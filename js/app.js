@@ -422,27 +422,45 @@ btnExportWeek.addEventListener('click', async () => {
     monthTypeChart = new Chart(ctx, { type:'bar', data:{ labels:Object.keys(counts), datasets:[{ data:Object.values(counts) }] }, options:{ responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true } } } });
   }
 
-  // MULTI-WEEK COMPARATIVE
-  function getAvailableWeeks(n=16){
-    const weeks=[]; const now=new Date();
-    for(let i=0;i<n;i++){
-      const base=new Date(now); base.setDate(base.getDate() - 7*i);
-      const ws = weekStart(base); const we = weekEndInc(ws);
-      weeks.push({ ws, we, lbl: `${ws.toLocaleDateString('pt-BR')} - ${we.toLocaleDateString('pt-BR')}` });
-    }
-    return weeks.reverse();
+// MULTI-WEEK COMPARATIVE
+function getAvailableWeeks(n = 6) {
+  const weeks = [];
+  const now = new Date();
+  for (let i = 0; i < n; i++) {
+    const base = new Date(now);
+    base.setDate(base.getDate() - 7 * i);
+    const ws = weekStart(base);   // início da semana (segunda-feira)
+    const we = weekEndInc(ws);    // final da semana (domingo, inclusive)
+    weeks.push({
+      ws, 
+      we, 
+      lbl: `${ws.toLocaleDateString('pt-BR')} - ${we.toLocaleDateString('pt-BR')}`
+    });
   }
-  function populateWeekFilter(){
-    const sel = document.getElementById('weekFilter'); if(!sel) return;
-    const weeks = getAvailableWeeks(20);
-    weeks.forEach((w,i)=>{ const o=document.createElement('option'); o.value = i; o.textContent = w.lbl; sel.appendChild(o); });
-    // select last 4 by default
-    for(let i=Math.max(0, sel.options.length-4); i<sel.options.length; i++){ sel.options[i].selected=true; }
+  return weeks.reverse(); // semana mais antiga primeiro
+}
+
+function populateWeekFilter() {
+  const sel = document.getElementById('weekFilter');
+  if (!sel) return;
+
+  const weeks = getAvailableWeeks(10); // gera 20 semanas
+  weeks.forEach((w, i) => {
+    const o = document.createElement('option');
+    o.value = i;        // índice da semana
+    o.textContent = w.lbl; // label para mostrar
+    sel.appendChild(o);
+  });
+
+  // Seleciona as últimas 4 semanas por padrão
+  for (let i = Math.max(0, sel.options.length - 4); i < sel.options.length; i++) {
+    sel.options[i].selected = true;
   }
+}
 
   async function buildComparative(){
     const sel = document.getElementById('weekFilter'); const chosen = Array.from(sel.selectedOptions).map(o=> parseInt(o.value));
-    const weeksRef = getAvailableWeeks(32);
+    const weeksRef = getAvailableWeeks(10);
     const selected = chosen.length ? chosen.map(i=> weeksRef[i]) : weeksRef.slice(-4);
     if(selected.length===0) return;
     const minStart = selected[0].ws; const maxEnd = selected[selected.length-1].we;
