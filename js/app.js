@@ -526,10 +526,7 @@ async function buildComparative() {
   });
 
   const labels = selected.map(w => w.lbl);
-  const data = labels.map(lbl => ({
-    x: lbl,
-    y: perWeek[lbl] || 0
-  }));
+  const data = labels.map(lbl => perWeek[lbl] || 0);
 
   const ctx = document.getElementById('comparativeChart').getContext('2d');
   if (comparativeChart) comparativeChart.destroy();
@@ -537,11 +534,11 @@ async function buildComparative() {
   comparativeChart = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels,
+      labels: labels,
       datasets: [{
         label: 'Lavagens',
-        data: data.map(d => d.y),
-        backgroundColor: '#28a745',
+        data: data,
+        backgroundColor: '#28a745', // verde
         barThickness: 16
       }]
     },
@@ -555,9 +552,8 @@ async function buildComparative() {
         tooltip: {
           callbacks: {
             label: function(context) {
-              const lbl = context.chart.data.labels[context.dataIndex];
-              const value = context.dataset.data[context.dataIndex];
-              return `${lbl} Lavagens: ${value}`;
+              // context.label é a label correta da barra
+              return `${context.label} Lavagens: ${context.raw}`;
             }
           }
         }
