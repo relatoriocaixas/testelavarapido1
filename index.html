@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MoveBuss — Controle de Lavagem</title>
+<link rel="icon" href="images/favicon.ico">
+<link rel="stylesheet" href="css/styles.css">
+<!-- Firebase compat -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Exports -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-left">
+    <button id="btnToggleSidebar" class="icon-btn hidden" title="Menu">☰</button>
+    <img src="images/logo.png" class="logo" alt="MoveBuss">
+    <div class="brand">MoveBuss — Lavagens</div>
+  </div>
+  <div class="topbar-right">
+    <button id="btnLogout" class="btn danger small hidden">Logout</button>
+  </div>
+</header>
+
+<div class="layout">
+  <!-- AUTH VIEW -->
+  <section id="authView" class="centered" style="display:flex; justify-content:center; align-items:center; min-height:100vh;">
+    <div class="auth-card card">
+      <img src="images/logo.png" class="auth-logo" alt="logo">
+      
+      <div class="auth-columns single">
+        <div class="auth-box">
+          <h3>Login</h3>
+          <input id="loginMatricula" placeholder="Matrícula (ex.: 6266)">
+          <input id="loginSenha" type="password" placeholder="Senha">
+          <div class="row">
+            <button id="btnLogin" class="btn green">Entrar</button>
+            <button id="btnShowRegister" class="btn">Cadastrar</button>
+          </div>
+        </div>
+
+        <div id="registerBox" class="auth-box hidden">
+          <h3>Cadastro</h3>
+          <input id="regMat" placeholder="Matrícula (4 dígitos)">
+          <input id="regPwd" type="password" placeholder="Senha (mín. 6)">
+          <input id="regPwd2" type="password" placeholder="Confirmar senha">
+          <div class="row">
+            <button id="btnCreate" class="btn green">Criar conta</button>
+            <button id="btnCancelReg" class="btn">Cancelar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIDEBAR -->
+<aside id="sidebar" class="sidebar hidden collapsed">
+  <div class="side-top">
+    <!-- Ícone hamburguer "fake" -->
+    <div class="hamburger-icon">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+  </div>
+  <nav class="side-nav">
+    <button data-view="home" class="nav-btn active"><span class="nav-icon">🏠</span><span class="nav-text">Lançamento</span></button>
+    <button data-view="weekly" class="nav-btn"><span class="nav-icon">📅</span><span class="nav-text">Semanal</span></button>
+    <button data-view="monthly" class="nav-btn"><span class="nav-icon">🗓️</span><span class="nav-text">Mensal</span></button>
+    <button data-view="charts" class="nav-btn"><span class="nav-icon">📊</span><span class="nav-text">Gráficos</span></button>
+    <button data-view="users" class="nav-btn admin-only hidden"><span class="nav-icon">👥</span><span class="nav-text">Usuários</span></button>
+  </nav>
+  <div class="side-footer small">Developed by Lucas L Custodio, V1</div>
+</aside>
+
+  <main id="main" class="main hidden" style="display:none;">
+    <!-- HOME / Lançamento -->
+    <section id="view-home" class="view">
+      <div class="card">
+        <div class="card-header"><h3>Lançamento de Lavagem</h3></div>
+        <div class="card-body form-grid">
+          <div class="field">
+            <label>Prefixo</label>
+            <div class="prefix-row"><span class="fixed">55</span><input id="inPrefix" maxlength="3" placeholder="001"></div>
+            <small class="muted">Insira 3 dígitos</small>
+          </div>
+          <div class="field">
+            <label>Tipo de Lavagem</label>
+            <div id="typeButtons" class="type-buttons">
+              <button class="type-btn selected" data-type="Lavagem Simples">Lavagem Simples</button>
+              <div class="badge-below"><span class="badge yellow"></span></div>
+              <button class="type-btn" data-type="Higienização">Higienização</button>
+              <div class="badge-below"><span class="badge green-light"></span></div>
+              <button class="type-btn" data-type="Exceções">Exceções</button>
+              <div class="badge-below"><span class="badge pink"></span></div>
+            </div>
+          </div>
+          <div class="field">
+            <label>Data</label>
+            <input id="inDate" type="date">
+          </div>
+          <div class="field actions">
+            <button id="btnSalvar" class="btn green">Salvar</button>
+            <button id="btnLimpar" class="btn">Limpar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h3>Prefixos com menos de duas lavagens (semana atual)</h3></div>
+        <div class="card-body">
+          <input id="filterPrefixLow" placeholder="Filtrar prefixos..." class="input" style="margin-bottom:12px; width:250px;">
+          <div id="prefixLowList" class="scroll-box"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RELATÓRIO SEMANAL -->
+<section id="view-weekly" class="view hidden">
+  <div class="card">
+    <div class="card-header"><h3>Relatório Semanal (segunda → domingo)</h3></div>
+    <div class="card-body">
+
+      <!-- FILTROS EXISTENTES -->
+      <div class="filters-row">
+        <input id="fPrefix" placeholder="Filtrar prefixo (ex: 55001)">
+        <select id="fTipo">
+          <option value="">Todos os tipos</option>
+          <option>Lavagem Simples</option>
+          <option>Higienização</option>
+          <option>Exceções</option>
+        </select>
+        <input id="fDate" type="date">
+        <button id="btnApplyWeek" class="btn">Aplicar</button>
+        <button id="btnClearWeek" class="btn">Limpar</button>
+        <button id="btnExportWeek" class="btn">Exportar Excel</button>
+      </div>
+
+      <!-- NOVO: Seletor de semanas anteriores -->
+      <div class="filters-row" style="margin-top:10px;">
+        <label for="weekSelector">Semana anterior:</label>
+        <select id="weekSelector"></select>
+        <button id="btnLoadSelectedWeek" class="btn">Carregar Semana</button>
+      </div>
+
+      <!-- TABELA EXISTENTE -->
+      <div id="weeklyTable" class="report-table"></div>
+    </div>
+    <div class="card-footer small muted">Reset visual na segunda 00:00 (histórico é preservado).</div>
+  </div>
+</section>
+
+    <!-- RELATÓRIO MENSAL -->
+    <section id="view-monthly" class="view hidden">
+      <div class="card">
+        <div class="card-header"><h3>Relatório Mensal — Todos os prefixos</h3></div>
+        <div class="card-body">
+          <div class="filters-row">
+            <input id="mPrefix" placeholder="Filtrar prefixo (ex: 55001)">
+            <button id="btnApplyMonthly" class="btn">Aplicar</button>
+            <button id="btnClearMonthly" class="btn">Limpar</button>
+            <button id="btnMonthlyXLS" class="btn">Excel</button>
+            <button id="btnMonthlyPDF" class="btn">PDF</button>
+            <button id="btnMonthlyPPT" class="btn">PPTX</button>
+          </div>
+          <div id="monthlyTable" class="report-table"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- GRÁFICOS -->
+    <section id="view-charts" class="view hidden">
+      <div class="chart-grid">
+        <div class="chart-card card">
+          <div class="card-header"><h3>Produtividade (média & total)</h3></div>
+          <div class="card-body"><canvas id="prodChart"></canvas></div>
+          <div class="card-footer"><button class="btn export" data-canvas="prodChart">Exportar (PPTX)</button></div>
+        </div>
+        <div class="chart-card card">
+          <div class="card-header"><h3>Quantidade no mês por tipo</h3></div>
+          <div class="card-body"><canvas id="monthTypeChart"></canvas></div>
+          <div class="card-footer"><button class="btn export" data-canvas="monthTypeChart">Exportar (PPTX)</button></div>
+        </div>
+        <div class="chart-card card">
+          <div class="card-header"><h3>Comparativo semana a semana</h3></div>
+          <div class="card-body">
+            <label for="weekFilter" class="label-inline">Selecione semanas (Ctrl/Cmd para múltiplas):</label>
+            <select id="weekFilter" multiple class="select-weeks"></select>
+            <canvas id="comparativeChart"></canvas>
+          </div>
+          <div class="card-footer"><button class="btn export" data-canvas="comparativeChart">Exportar (PPTX)</button></div>
+        </div>
+        <div class="chart-card card">
+          <div class="card-header"><h3>Média por faixa horária</h3></div>
+          <div class="card-body"><canvas id="hourChart"></canvas></div>
+          <div class="card-footer"><button class="btn export" data-canvas="hourChart">Exportar (PPTX)</button></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- USUÁRIOS -->
+    <section id="view-users" class="view hidden">
+      <div class="card">
+        <div class="card-header"><h3>Usuários</h3></div>
+        <div class="card-body">
+          <div id="userList" class="report-table"></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
