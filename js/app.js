@@ -404,6 +404,7 @@ document.getElementById('btnMonthlyXLS').addEventListener('click', exportMonthly
 document.getElementById('btnMonthlyPDF').addEventListener('click', exportMonthlyPDF);
 document.getElementById('btnMonthlyPPT').addEventListener('click', exportMonthlyPPT);
 
+// MONTHLY report (all prefixes)
 async function loadMonthly(filter) {
   monthlyTable.innerHTML = '<em>Carregando...</em>';
 
@@ -416,6 +417,7 @@ async function loadMonthly(filter) {
     .where('createdAt', '<', firebase.firestore.Timestamp.fromDate(end))
     .get();
 
+  // Conta quantas vezes cada prefixo aparece no mês
   const counts = {};
   q.forEach(s => {
     const v = s.data();
@@ -426,19 +428,22 @@ async function loadMonthly(filter) {
   table.innerHTML = '<thead><tr><th>Prefixo</th><th>Total do mês</th></tr></thead>';
   const tb = document.createElement('tbody');
 
-  allPrefixList().forEach(p => {
+  // Lista de todos os prefixos
+  const prefixes = [];
+  for(let i=1;i<=559;i++) prefixes.push('55'+String(i).padStart(3,'0'));
+  for(let i=900;i<=1000;i++) prefixes.push('55'+String(i).padStart(3,'0'));
+
+  prefixes.forEach(p => {
     if (filter && !p.includes(filter)) return;
 
-    const cls = prefixBadgeClass(parseInt(p));
+    const cls = prefixBadgeClass(parseInt(p)); // pega a cor
     const tr = document.createElement('tr');
 
-    // ✅ MESMA LÓGICA DO WEEKLY / LOWWASH
+    // ✅ Badge atrás do texto, mesma lógica do weekly
     tr.innerHTML = `
-      <td>
-        <div class="prefix-cell">
-          <span class="text">${p}</span>
-          <span class="badge ${cls}"></span>
-        </div>
+      <td class="prefix-cell">
+        <span class="text">${p}</span>
+        <span class="badge ${cls}"></span>
       </td>
       <td>${counts[p] || 0}</td>
     `;
