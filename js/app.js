@@ -972,7 +972,17 @@ if(filterInput && prefixList){
       q.forEach(d => rows.push({id: d.id, ...d.data()}));
 
       const table = document.createElement('table');
-      table.innerHTML = '<thead><tr><th>Prefixo</th><th>Tipo</th><th>Data</th><th>Hora</th><th>Criado em</th></tr></thead>';
+      table.innerHTML = `
+  <thead>
+    <tr>
+      <th>Prefixo</th>
+      <th>Tipo</th>
+      <th>Data</th>
+      <th>Hora</th>
+      <th>Matrícula</th>
+    </tr>
+  </thead>
+`;
       const tb = document.createElement('tbody');
 
       rows.forEach(r => {
@@ -982,13 +992,13 @@ if(filterInput && prefixList){
         const pClass = prefixBadgeClass(parseInt(r.prefixo));
         const tClass = typeBadgeClass(r.tipo);
         const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${r.prefixo}<div class="badge ${pClass}"></div></td>
-          <td>${r.tipo}<div class="badge ${tClass}"></div></td>
-          <td>${formatBR(r.data.toDate())}</td>
-          <td><span class="badge ${horaClass}">${hora}</span></td>
-          <td>${formatBR(saved)}</td>
-        `;
+tr.innerHTML = `
+  <td>${r.prefixo}<div class="badge ${pClass}"></div></td>
+  <td>${r.tipo}<div class="badge ${tClass}"></div></td>
+  <td>${formatBR(r.data.toDate())}</td>
+  <td><span class="badge ${horaClass}">${hora}</span></td>
+  <td>${r.userEmail ? r.userEmail.split('@')[0] : '—'}</td>
+`;       
         tb.appendChild(tr);
       });
 
