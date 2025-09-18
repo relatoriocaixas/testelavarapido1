@@ -350,7 +350,6 @@ btnExportWeek.addEventListener('click', async () => {
   XLSX.utils.book_append_sheet(wb, wsX, 'Semana');
   XLSX.writeFile(wb, 'relatorio_semana.xlsx');
 });
-
   // MONTHLY report (all prefixes)
   const mPrefix = document.getElementById('mPrefix');
   const monthlyTable = document.getElementById('monthlyTable');
@@ -858,7 +857,7 @@ if(filterInput && prefixList){
                       <td>${r.tipo}<div class="badge ${tClass}"></div></td>
                       <td>${formatBR(r.data.toDate())}</td>
                       <td><span class="badge ${horaClass}">${hora}</span></td>
-                      <td>${formatBR(saved)}</td>`;
+                      <td>${r.userEmail ? r.userEmail.split('@')[0] : ''}</td>;
       tb.appendChild(tr);
     });
     table.appendChild(tb);
