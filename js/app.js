@@ -171,15 +171,35 @@ async function saveWeeklySnapshot(){
     if(btn.dataset.view==='users'){ loadUsers(); }
   }));
 
-  // Lançamento: inputs
-  const inPrefix = document.getElementById('inPrefix');
-  const inDate = document.getElementById('inDate');
-  const btnSalvar = document.getElementById('btnSalvar');
-  const btnLimpar = document.getElementById('btnLimpar');
-  const typeBtns = document.querySelectorAll('#typeButtons .type-btn');
-  let selectedType = 'Lavagem Simples';
-  typeBtns.forEach(b=> b.addEventListener('click', ()=>{ typeBtns.forEach(x=>x.classList.remove('selected')); b.classList.add('selected'); selectedType = b.dataset.type; }));
-  inDate.value = new Date().toISOString().slice(0,10);
+// Lançamento: inputs
+const inPrefix = document.getElementById('inPrefix');
+const inDate = document.getElementById('inDate');
+const btnSalvar = document.getElementById('btnSalvar');
+const btnLimpar = document.getElementById('btnLimpar');
+const typeBtns = document.querySelectorAll('#typeButtons .type-btn');
+let selectedType = 'Lavagem Simples';
+
+// Badge do prefixo
+const prefixBadge = document.getElementById('prefixBadge');
+
+function updatePrefixBadge() {
+  const fullPrefix = "55" + inPrefix.value.padStart(3, "0");
+  prefixBadge.className = "badge " + prefixBadgeClass(fullPrefix);
+}
+
+// Atualiza a badge ao digitar
+inPrefix.addEventListener("input", updatePrefixBadge);
+// Atualiza ao carregar a página se já houver valor
+updatePrefixBadge();
+
+// Tipo de lavagem
+typeBtns.forEach(b => b.addEventListener('click', () => {
+  typeBtns.forEach(x => x.classList.remove('selected'));
+  b.classList.add('selected');
+  selectedType = b.dataset.type;
+}));
+
+inDate.value = new Date().toISOString().slice(0,10);
 
  // ======== Salvar lançamento ========
 btnSalvar.addEventListener('click', async ()=> {

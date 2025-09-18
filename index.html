@@ -88,10 +88,16 @@
         <div class="card-header"><h3>Lançamento de Lavagem</h3></div>
         <div class="card-body form-grid">
           <div class="field">
-            <label>Prefixo</label>
-            <div class="prefix-row"><span class="fixed">55</span><input id="inPrefix" maxlength="3" placeholder="001"></div>
-            <small class="muted">Insira 3 dígitos</small>
-          </div>
+  <label>Prefixo</label>
+  <div class="prefix-row">
+    <span class="fixed">55</span>
+    <input id="inPrefix" maxlength="3" placeholder="001">
+  </div>
+  <div class="badge-below">
+    <span id="prefixBadge" class="badge"></span>
+  </div>
+  <small class="muted">Insira 3 dígitos</small>
+</div>
           <div class="field">
             <label>Tipo de Lavagem</label>
             <div id="typeButtons" class="type-buttons">
