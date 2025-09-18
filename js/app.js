@@ -269,32 +269,53 @@ function getSelectedWeekRange() {
   const we = weekEndInc(ws);
   return { ws, we };
 }
-  async function loadWeekly(){
-    weeklyTable.innerHTML = '<em>Carregando...</em>';
-    const { ws, we } = getSelectedWeekRange();
-    const q = await db.collection('relatorios').where('createdAt','>=', firebase.firestore.Timestamp.fromDate(ws)).where('createdAt','<', firebase.firestore.Timestamp.fromDate(we)).orderBy('createdAt','desc').get();
-    const rows=[]; q.forEach(d=> rows.push({id:d.id, ...d.data()}));
-    const table = document.createElement('table');
-    table.innerHTML = '<thead><tr><th>Prefixo</th><th>Tipo</th><th>Data</th><th>Hora</th><th>Criado em</th></tr></thead>';
-    const tb=document.createElement('tbody');
-    rows.forEach(r=>{
-      if(fPrefix.value && !r.prefixo.includes(fPrefix.value.trim())) return;
-      if(fTipo.value && r.tipo!==fTipo.value) return;
-      if(fDate.value){ const d=r.data.toDate(); const f=new Date(fDate.value); d.setHours(0,0,0,0); f.setHours(0,0,0,0); if(d.getTime()!==f.getTime()) return; }
-      const saved = r.createdAt && r.createdAt.toDate ? r.createdAt.toDate() : new Date();
-      const hora = saved.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-      const horaClass = horaBadgeClass(saved.getHours());
-      const tr=document.createElement('tr');
-      const pClass = prefixBadgeClass(parseInt(r.prefixo));
-      const tClass = typeBadgeClass(r.tipo);
-      tr.innerHTML = `<td>${r.prefixo}<div class="badge ${pClass}"></div></td>
-                      <td>${r.tipo}<div class="badge ${tClass}"></div></td>
-                      <td>${formatBR(r.data.toDate())}</td>
-                      <td><span class="badge ${horaClass}">${hora}</span></td>
-                      <td>${formatBR(saved)}</td>`;
-      tb.appendChild(tr);
-    });
-    table.appendChild(tb); weeklyTable.innerHTML=''; weeklyTable.appendChild(table);
+async function loadWeekly(){
+  weeklyTable.innerHTML = '<em>Carregando...</em>';
+  const { ws, we } = getSelectedWeekRange();
+  const q = await db.collection('relatorios')
+      .where('createdAt','>=', firebase.firestore.Timestamp.fromDate(ws))
+      .where('createdAt','<', firebase.firestore.Timestamp.fromDate(we))
+      .orderBy('createdAt','desc')
+      .get();
+
+  const rows=[]; q.forEach(d=> rows.push({id:d.id, ...d.data()}));
+
+  const table = document.createElement('table');
+  table.innerHTML = '<thead><tr><th>Prefixo</th><th>Tipo</th><th>Data</th><th>Hora</th><th>Matrícula</th></tr></thead>';
+  const tb=document.createElement('tbody');
+
+  rows.forEach(r=>{
+    if(fPrefix.value && !r.prefixo.includes(fPrefix.value.trim())) return;
+    if(fTipo.value && r.tipo!==fTipo.value) return;
+    if(fDate.value){
+      const d=r.data.toDate();
+      const f=new Date(fDate.value);
+      d.setHours(0,0,0,0); f.setHours(0,0,0,0);
+      if(d.getTime()!==f.getTime()) return;
+    }
+
+    const saved = r.createdAt && r.createdAt.toDate ? r.createdAt.toDate() : new Date();
+    const hora = saved.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    const horaClass = horaBadgeClass(saved.getHours());
+    const pClass = prefixBadgeClass(parseInt(r.prefixo));
+    const tClass = typeBadgeClass(r.tipo);
+
+    // pega só o que vem antes do @
+    const matricula = r.userEmail ? r.userEmail.split('@')[0] : '—';
+
+    const tr=document.createElement('tr');
+    tr.innerHTML = `
+      <td>${r.prefixo}<div class="badge ${pClass}"></div></td>
+      <td>${r.tipo}<div class="badge ${tClass}"></div></td>
+      <td>${formatBR(r.data.toDate())}</td>
+      <td><span class="badge ${horaClass}">${hora}</span></td>
+      <td>${matricula}</td>`;   // <-- mostra só os números da matrícula
+    tb.appendChild(tr);
+  });
+
+  table.appendChild(tb);
+  weeklyTable.innerHTML='';
+  weeklyTable.appendChild(table);
   }
  btnApplyWeek.addEventListener('click', loadWeekly);
 
@@ -308,7 +329,6 @@ btnClearWeek.addEventListener('click', () => {
 
 btnExportWeek.addEventListener('click', async () => {
   const { ws, we } = getSelectedWeekRange();
-
   const q = await db.collection('relatorios')
     .where('createdAt', '>=', firebase.firestore.Timestamp.fromDate(ws))
     .where('createdAt', '<', firebase.firestore.Timestamp.fromDate(we))
@@ -321,7 +341,7 @@ btnExportWeek.addEventListener('click', async () => {
       prefixo: v.prefixo,
       tipo: v.tipo,
       data: v.data.toDate().toLocaleDateString('pt-BR'),
-      criado: v.createdAt.toDate().toLocaleString('pt-BR')
+      matricula: v.userEmail ? v.userEmail.split('@')[0] : '—'  // só antes do @
     });
   });
 
