@@ -434,14 +434,12 @@ async function loadMonthly(filter) {
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>
-        <div class="badge-below">
-          <span class="text">${p}</span>
-          <span class="badge ${cls}"></span>
-        </div>
-      </td>
-      <td>${counts[p] || 0}</td>
-    `;
+  <td class="prefix-cell">
+    <span class="text">${p}</span>
+    <span class="badge ${cls}"></span>
+  </td>
+  <td>${counts[p] || 0}</td>
+`;
     tb.appendChild(tr);
   });
 
