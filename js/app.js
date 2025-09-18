@@ -267,16 +267,19 @@ async function loadLowWash(){
 
     el.innerHTML='';
     prefixes.forEach(p => {
-        const full='55'+p;
-        const c = counts[full] || 0;
-        if(c < 2){
-            const div = document.createElement('div');
-            const cls = prefixBadgeClass(parseInt(full));
-            div.innerHTML = `<div>${full}</div><div class="badge ${cls}"></div><div class="small muted">(${c} lav.)</div>`;
-            el.appendChild(div);
-        }
-    });
-}
+    const full = '55'+p;
+    const c = counts[full] || 0;
+    if(c < 2){
+        const div = document.createElement('div');
+        const cls = prefixBadgeClass(parseInt(full));
+        div.innerHTML = `
+            ${full}
+            <span class="badge ${cls} badge-below"></span>
+            <div class="small muted">(${c} lav.)</div>
+        `;
+        el.appendChild(div);
+    }
+});}
 
   // WEEKLY report
   const fPrefix = document.getElementById('fPrefix');
@@ -327,14 +330,21 @@ async function loadWeekly(){
     // pega só o que vem antes do @
     const matricula = r.userEmail ? r.userEmail.split('@')[0] : '—';
 
-    const tr=document.createElement('tr');
-    tr.innerHTML = `
-      <td>${r.prefixo}<div class="badge ${pClass}"></div></td>
-      <td>${r.tipo}<div class="badge ${tClass}"></div></td>
-      <td>${formatBR(r.data.toDate())}</td>
-      <td><span class="badge ${horaClass}">${hora}</span></td>
-      <td>${matricula}</td>`;   // <-- mostra só os números da matrícula
-    tb.appendChild(tr);
+const tr = document.createElement('tr');
+tr.innerHTML = `
+  <td>
+    ${r.prefixo}
+    <span class="badge ${pClass} badge-below"></span>
+  </td>
+  <td>
+    ${r.tipo}
+    <span class="badge ${tClass}"></span>
+  </td>
+  <td>${formatBR(r.data.toDate())}</td>
+  <td><span class="badge ${horaClass}">${hora}</span></td>
+  <td>${matricula}</td>
+`;
+tb.appendChild(tr);
   });
 
   table.appendChild(tb);
@@ -374,6 +384,7 @@ btnExportWeek.addEventListener('click', async () => {
   XLSX.utils.book_append_sheet(wb, wsX, 'Semana');
   XLSX.writeFile(wb, 'relatorio_semana.xlsx');
 });
+
   // MONTHLY report (all prefixes)
   const mPrefix = document.getElementById('mPrefix');
   const monthlyTable = document.getElementById('monthlyTable');
@@ -397,7 +408,7 @@ btnExportWeek.addEventListener('click', async () => {
       if(filter && !p.includes(filter)) return;
       const tr=document.createElement('tr');
       const cls = prefixBadgeClass(parseInt(p));
-      tr.innerHTML = `<td>${p}<div class="badge ${cls}"></div></td><td>${counts[p]||0}</td>`;
+      tr.innerHTML = `<td>${p}<span class="badge ${cls} badge-below"></span></td><td>${counts[p]||0}</td>`;
       tb.appendChild(tr);
     });
     table.appendChild(tb); monthlyTable.innerHTML=''; monthlyTable.appendChild(table);
