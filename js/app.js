@@ -441,12 +441,14 @@ async function loadMonthly(filter) {
 
     // ✅ Badge atrás do texto, mesma lógica do weekly
     tr.innerHTML = `
-      <td class="prefix-cell">
-        <span class="text">${p}</span>
-        <span class="badge ${cls}"></span>
-      </td>
-      <td>${counts[p] || 0}</td>
-    `;
+  <td>
+    <div class="prefix-cell">
+      <span class="text">${p}</span>
+      <span class="badge ${cls}"></span>
+    </div>
+  </td>
+  <td>${counts[p] || 0}</td>
+`;
     tb.appendChild(tr);
   });
 
