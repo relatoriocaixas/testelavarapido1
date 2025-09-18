@@ -853,12 +853,14 @@ if(filterInput && prefixList){
       const pClass = prefixBadgeClass(parseInt(r.prefixo));
       const tClass = typeBadgeClass(r.tipo);
       const tr=document.createElement('tr');
-      tr.innerHTML = `<td>${r.prefixo}<div class="badge ${pClass}"></div></td>
-                      <td>${r.tipo}<div class="badge ${tClass}"></div></td>
-                      <td>${formatBR(r.data.toDate())}</td>
-                      <td><span class="badge ${horaClass}">${hora}</span></td>
-                      <td>${r.userEmail ? r.userEmail.split('@')[0] : ''}</td>;
-      tb.appendChild(tr);
+      tr.innerHTML = `
+  <td>${r.prefixo}<div class="badge ${pClass}"></div></td>
+  <td>${r.tipo}<div class="badge ${tClass}"></div></td>
+  <td>${formatBR(r.data.toDate())}</td>
+  <td><span class="badge ${horaClass}">${hora}</span></td>
+  <td>${r.userEmail ? r.userEmail.split('@')[0] : ''}</td>
+`;    
+  tb.appendChild(tr);
     });
     table.appendChild(tb);
     weeklyTable.innerHTML='';
