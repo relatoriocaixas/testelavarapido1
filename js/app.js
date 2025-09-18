@@ -241,48 +241,47 @@ btnLimpar.addEventListener('click', ()=>{
 });
 
 // ======== Prefixos com <2 lavagens na semana ========
-async function loadLowWash(){
-    const el = document.getElementById('prefixLowList');
-    el.innerHTML = '<em>Carregando...</em>';
+async function loadLowWash() {
+  const el = document.getElementById('prefixLowList');
+  el.innerHTML = '<em>Carregando...</em>';
 
-    const prefixes = [];
-    for(let i=1;i<=559;i++) prefixes.push(String(i).padStart(3,'0'));
-    for(let i=900;i<=1000;i++) prefixes.push(String(i).padStart(3,'0'));
+  const prefixes = [];
+  for (let i = 1; i <= 559; i++) prefixes.push(String(i).padStart(3, '0'));
+  for (let i = 900; i <= 1000; i++) prefixes.push(String(i).padStart(3, '0'));
 
-    const now = new Date();
-    const ws = weekStart(now);
-    const we = weekEndInc(ws);
+  const now = new Date();
+  const ws = weekStart(now);
+  const we = weekEndInc(ws);
 
-    // filtra pelo campo 'data', que é a data escolhida pelo usuário
-    const snap = await db.collection('relatorios')
-        .where('data', '>=', firebase.firestore.Timestamp.fromDate(ws))
-        .where('data', '<', firebase.firestore.Timestamp.fromDate(we))
-        .get();
+  // filtra pelo campo 'data', que é a data escolhida pelo usuário
+  const snap = await db.collection('relatorios')
+    .where('data', '>=', firebase.firestore.Timestamp.fromDate(ws))
+    .where('data', '<', firebase.firestore.Timestamp.fromDate(we))
+    .get();
 
-    const counts = {};
-    snap.forEach(s => {
-        const v = s.data();
-        counts[v.prefixo] = (counts[v.prefixo] || 0) + 1;
-    });
+  const counts = {};
+  snap.forEach(s => {
+    const v = s.data();
+    counts[v.prefixo] = (counts[v.prefixo] || 0) + 1;
+  });
 
-    el.innerHTML = '';
-prefixes.forEach(p => {
+  el.innerHTML = '';
+  prefixes.forEach(p => {
     const full = '55' + p;
     const c = counts[full] || 0;
     if (c < 2) {
-        const div = document.createElement('div');
-        const cls = prefixBadgeClass(parseInt(full));
+      const div = document.createElement('div');
+      const cls = prefixBadgeClass(parseInt(full));
 
-        // ✅ estrutura para texto sobre a cor
-        div.classList.add('prefix-cell');
-        div.innerHTML = `
-            <span class="text">${full}</span>
-            <span class="badge ${cls}"></span>
-            <div class="small muted">(${c} lav.)</div>
-        `;
-        el.appendChild(div);
+      // ✅ Agora o texto está DENTRO da badge (igual à de horário)
+      div.innerHTML = `
+        <span class="badge ${cls}">${full}</span>
+        <div class="small muted">(${c} lav.)</div>
+      `;
+      el.appendChild(div);
     }
-});}
+  });
+}
 
   // WEEKLY report
   const fPrefix = document.getElementById('fPrefix');
@@ -299,7 +298,7 @@ function getSelectedWeekRange() {
   const we = weekEndInc(ws);
   return { ws, we };
 }
-async function loadWeekly(){
+async function loadWeekly() {
   weeklyTable.innerHTML = '<em>Carregando...</em>';
   const { ws, we } = getSelectedWeekRange();
   const q = await db.collection('relatorios')
@@ -308,20 +307,21 @@ async function loadWeekly(){
       .orderBy('createdAt','desc')
       .get();
 
-  const rows=[]; q.forEach(d=> rows.push({id:d.id, ...d.data()}));
+  const rows = [];
+  q.forEach(d => rows.push({id:d.id, ...d.data()}));
 
   const table = document.createElement('table');
   table.innerHTML = '<thead><tr><th>Prefixo</th><th>Tipo</th><th>Data</th><th>Hora</th><th>Matrícula</th></tr></thead>';
-  const tb=document.createElement('tbody');
+  const tb = document.createElement('tbody');
 
-  rows.forEach(r=>{
+  rows.forEach(r => {
     if(fPrefix.value && !r.prefixo.includes(fPrefix.value.trim())) return;
-    if(fTipo.value && r.tipo!==fTipo.value) return;
+    if(fTipo.value && r.tipo !== fTipo.value) return;
     if(fDate.value){
-      const d=r.data.toDate();
-      const f=new Date(fDate.value);
+      const d = r.data.toDate();
+      const f = new Date(fDate.value);
       d.setHours(0,0,0,0); f.setHours(0,0,0,0);
-      if(d.getTime()!==f.getTime()) return;
+      if(d.getTime() !== f.getTime()) return;
     }
 
     const saved = r.createdAt && r.createdAt.toDate ? r.createdAt.toDate() : new Date();
@@ -333,27 +333,25 @@ async function loadWeekly(){
     // pega só o que vem antes do @
     const matricula = r.userEmail ? r.userEmail.split('@')[0] : '—';
 
-const tr = document.createElement('tr');
-tr.innerHTML = `
-  <td class="prefix-cell">
-    <span class="text">${r.prefixo}</span>
-    <span class="badge ${pClass}"></span>
-  </td>
-  <td>
-    ${r.tipo}
-    <span class="badge ${tClass}"></span>
-  </td>
-  <td>${formatBR(r.data.toDate())}</td>
-  <td><span class="badge ${horaClass}">${hora}</span></td>
-  <td>${matricula}</td>
-`;
-tb.appendChild(tr);
-});
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>
+        <span class="badge ${pClass}">${r.prefixo}</span>
+      </td>
+      <td>
+        <span class="badge ${tClass}">${r.tipo}</span>
+      </td>
+      <td>${formatBR(r.data.toDate())}</td>
+      <td><span class="badge ${horaClass}">${hora}</span></td>
+      <td>${matricula}</td>
+    `;
+    tb.appendChild(tr);
+  });
 
   table.appendChild(tb);
-  weeklyTable.innerHTML='';
+  weeklyTable.innerHTML = '';
   weeklyTable.appendChild(table);
-  }
+}
  btnApplyWeek.addEventListener('click', loadWeekly);
 
 btnClearWeek.addEventListener('click', () => {
@@ -389,42 +387,49 @@ btnExportWeek.addEventListener('click', async () => {
 });
 
   // MONTHLY report (all prefixes)
-  const mPrefix = document.getElementById('mPrefix');
-  const monthlyTable = document.getElementById('monthlyTable');
-  document.getElementById('btnApplyMonthly').addEventListener('click', ()=> loadMonthly(mPrefix.value.trim()));
-  document.getElementById('btnClearMonthly').addEventListener('click', ()=>{ mPrefix.value=''; loadMonthly(''); });
-  document.getElementById('btnMonthlyXLS').addEventListener('click', exportMonthlyXLS);
-  document.getElementById('btnMonthlyPDF').addEventListener('click', exportMonthlyPDF);
-  document.getElementById('btnMonthlyPPT').addEventListener('click', exportMonthlyPPT);
+  async function loadMonthly(filter) {
+  monthlyTable.innerHTML = '<em>Carregando...</em>';
 
-  function allPrefixList(){
-    const arr=[]; for(let i=1;i<=559;i++) arr.push('55'+String(i).padStart(3,'0')); for(let i=900;i<=1000;i++) arr.push('55'+String(i).padStart(3,'0')); return arr;
-  }
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), 1);
+  const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
-  async function loadMonthly(filter){
-    monthlyTable.innerHTML = '<em>Carregando...</em>';
-    const now=new Date(); const start=new Date(now.getFullYear(),now.getMonth(),1); const end=new Date(now.getFullYear(),now.getMonth()+1,1);
-    const q = await db.collection('relatorios').where('createdAt','>=', firebase.firestore.Timestamp.fromDate(start)).where('createdAt','<', firebase.firestore.Timestamp.fromDate(end)).get();
-    const counts={}; q.forEach(s=>{ const v=s.data(); counts[v.prefixo]=(counts[v.prefixo]||0)+1; });
-    const table=document.createElement('table'); table.innerHTML='<thead><tr><th>Prefixo</th><th>Total do mês</th></tr></thead>'; const tb=document.createElement('tbody');
-   allPrefixList().forEach(p => {
-  if (filter && !p.includes(filter)) return;
+  const q = await db.collection('relatorios')
+    .where('createdAt', '>=', firebase.firestore.Timestamp.fromDate(start))
+    .where('createdAt', '<', firebase.firestore.Timestamp.fromDate(end))
+    .get();
 
-  const tr = document.createElement('tr');
-  const cls = prefixBadgeClass(parseInt(p));
+  const counts = {};
+  q.forEach(s => {
+    const v = s.data();
+    counts[v.prefixo] = (counts[v.prefixo] || 0) + 1;
+  });
 
-  tr.innerHTML = `
-    <td class="prefix-cell">
-       <span class="text">${p}</span>
-       <span class="badge ${cls}"></span>
-    </td>
-    <td>${counts[p] || 0}</td>
-  `;
-  tb.appendChild(tr);
-});
+  const table = document.createElement('table');
+  table.innerHTML = '<thead><tr><th>Prefixo</th><th>Total do mês</th></tr></thead>';
+  const tb = document.createElement('tbody');
 
-    table.appendChild(tb); monthlyTable.innerHTML=''; monthlyTable.appendChild(table);
-  }
+  allPrefixList().forEach(p => {
+    if (filter && !p.includes(filter)) return;
+
+    const cls = prefixBadgeClass(parseInt(p));
+    const tr = document.createElement('tr');
+
+    // ✅ Badge atrás do texto
+    tr.innerHTML = `
+      <td class="prefix-cell">
+        <span class="text">${p}</span>
+        <span class="badge ${cls}"></span>
+      </td>
+      <td>${counts[p] || 0}</td>
+    `;
+    tb.appendChild(tr);
+  });
+
+  table.appendChild(tb);
+  monthlyTable.innerHTML = '';
+  monthlyTable.appendChild(table);
+}
 
   async function exportMonthlyXLS(){
     const now=new Date(); const start=new Date(now.getFullYear(),now.getMonth(),1); const end=new Date(now.getFullYear(),now.getMonth()+1,1);
