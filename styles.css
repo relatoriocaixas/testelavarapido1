@@ -355,7 +355,6 @@ body {
 /* Badges atrás do texto nas tabelas */
 td.prefix-cell {
   position: relative;
-  display: inline-block; /* mantém o tamanho do conteúdo */
   padding: 2px 4px;
 }
 
@@ -367,13 +366,14 @@ td.prefix-cell .badge {
   height: 100%;
   border-radius: 6px;
   opacity: 0.3;  /* ajusta a transparência da cor */
-  z-index: -1;    /* fica atrás do texto */
+  z-index: 0;    /* fica atrás do texto */
 }
 
 td.prefix-cell span.text {
   position: relative;
   z-index: 1;    /* texto sobre a badge */
 }
+
 /* --- Garantir que o texto fique na frente e o badge por baixo --- */
 .badge-below {
   position: relative;      /* cria contexto de empilhamento */
