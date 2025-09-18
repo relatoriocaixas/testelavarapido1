@@ -432,7 +432,6 @@ async function loadMonthly(filter) {
     const cls = prefixBadgeClass(parseInt(p));
     const tr = document.createElement('tr');
 
-    // ✅ Badge atrás do texto
     tr.innerHTML = `
       <td class="prefix-cell">
         <span class="text">${p}</span>
