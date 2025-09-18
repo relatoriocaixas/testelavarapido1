@@ -427,7 +427,6 @@ async function loadMonthly(filter) {
   table.innerHTML = '<thead><tr><th>Prefixo</th><th>Total do mês</th></tr></thead>';
   const tb = document.createElement('tbody');
 
-  // Lista de prefixos
   const prefixes = [];
   for (let i = 1; i <= 559; i++) prefixes.push('55' + String(i).padStart(3, '0'));
   for (let i = 900; i <= 1000; i++) prefixes.push('55' + String(i).padStart(3, '0'));
@@ -438,10 +437,10 @@ async function loadMonthly(filter) {
     const cls = prefixBadgeClass(parseInt(p));
     const tr = document.createElement('tr');
 
-    // ✅ Usa a mesma lógica do weekly / lowWash
+    // ✅ Mesma lógica do horário: badge atrás do texto
     tr.innerHTML = `
       <td>
-        <div class="prefix-cell">
+        <div class="badge-below">
           <span class="text">${p}</span>
           <span class="badge ${cls}"></span>
         </div>

@@ -367,7 +367,7 @@ td.prefix-cell .badge {
   height: 100%;
   border-radius: 6px;
   opacity: 0.3;  /* ajusta a transparência da cor */
-  z-index: 0;    /* fica atrás do texto */
+  z-index: -1;    /* fica atrás do texto */
 }
 
 td.prefix-cell span.text {
