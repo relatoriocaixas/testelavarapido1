@@ -265,16 +265,19 @@ async function loadLowWash(){
         counts[v.prefixo] = (counts[v.prefixo] || 0) + 1;
     });
 
-    el.innerHTML='';
-    prefixes.forEach(p => {
-    const full = '55'+p;
+    el.innerHTML = '';
+prefixes.forEach(p => {
+    const full = '55' + p;
     const c = counts[full] || 0;
-    if(c < 2){
+    if (c < 2) {
         const div = document.createElement('div');
         const cls = prefixBadgeClass(parseInt(full));
+
+        // ✅ estrutura para texto sobre a cor
+        div.classList.add('prefix-cell');
         div.innerHTML = `
-            ${full}
-            <span class="badge ${cls} badge-below"></span>
+            <span class="text">${full}</span>
+            <span class="badge ${cls}"></span>
             <div class="small muted">(${c} lav.)</div>
         `;
         el.appendChild(div);
@@ -332,9 +335,9 @@ async function loadWeekly(){
 
 const tr = document.createElement('tr');
 tr.innerHTML = `
-  <td>
-    ${r.prefixo}
-    <span class="badge ${pClass} badge-below"></span>
+  <td class="prefix-cell">
+    <span class="text">${r.prefixo}</span>
+    <span class="badge ${pClass}"></span>
   </td>
   <td>
     ${r.tipo}
@@ -345,7 +348,7 @@ tr.innerHTML = `
   <td>${matricula}</td>
 `;
 tb.appendChild(tr);
-  });
+});
 
   table.appendChild(tb);
   weeklyTable.innerHTML='';
@@ -404,13 +407,22 @@ btnExportWeek.addEventListener('click', async () => {
     const q = await db.collection('relatorios').where('createdAt','>=', firebase.firestore.Timestamp.fromDate(start)).where('createdAt','<', firebase.firestore.Timestamp.fromDate(end)).get();
     const counts={}; q.forEach(s=>{ const v=s.data(); counts[v.prefixo]=(counts[v.prefixo]||0)+1; });
     const table=document.createElement('table'); table.innerHTML='<thead><tr><th>Prefixo</th><th>Total do mês</th></tr></thead>'; const tb=document.createElement('tbody');
-    allPrefixList().forEach(p=>{
-      if(filter && !p.includes(filter)) return;
-      const tr=document.createElement('tr');
-      const cls = prefixBadgeClass(parseInt(p));
-      tr.innerHTML = `<td>${p}<span class="badge ${cls} badge-below"></span></td><td>${counts[p]||0}</td>`;
-      tb.appendChild(tr);
-    });
+   allPrefixList().forEach(p => {
+  if (filter && !p.includes(filter)) return;
+
+  const tr = document.createElement('tr');
+  const cls = prefixBadgeClass(parseInt(p));
+
+  tr.innerHTML = `
+    <td class="prefix-cell">
+       <span class="text">${p}</span>
+       <span class="badge ${cls}"></span>
+    </td>
+    <td>${counts[p] || 0}</td>
+  `;
+  tb.appendChild(tr);
+});
+
     table.appendChild(tb); monthlyTable.innerHTML=''; monthlyTable.appendChild(table);
   }
 
@@ -485,7 +497,6 @@ btnExportWeek.addEventListener('click', async () => {
     'Higienização': '#ffc107',    // amarelo
     'Exceções': '#dc3545'         // vermelho
   };
-
   const ctx = document.getElementById('monthTypeChart').getContext('2d');
   if (monthTypeChart) monthTypeChart.destroy();
 

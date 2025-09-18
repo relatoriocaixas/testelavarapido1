@@ -351,3 +351,26 @@ body {
 /* When sidebar visible, ensure full width */
 #sidebar { width: 240px; }
 #sidebar.collapsed { width: 70px; }
+
+/* Badges atrás do texto nas tabelas */
+td.prefix-cell {
+  position: relative;
+  display: inline-block; /* mantém o tamanho do conteúdo */
+  padding: 2px 4px;
+}
+
+td.prefix-cell .badge {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 6px;
+  opacity: 0.3;  /* ajusta a transparência da cor */
+  z-index: 0;    /* fica atrás do texto */
+}
+
+td.prefix-cell span.text {
+  position: relative;
+  z-index: 1;    /* texto sobre a badge */
+}
