@@ -182,11 +182,11 @@ async function saveWeeklySnapshot(){
   inDate.value = new Date().toISOString().slice(0,10);
 
  // ======== Salvar lançamento ========
-btnSalvar.addEventListener('click', async ()=>{
+btnSalvar.addEventListener('click', async ()=> {
     const suff = inPrefix.value.trim();
-    if(!/^\d{3}$/.test(suff)){ 
-        alert('Prefixo deve ter 3 dígitos'); 
-        return; 
+    if(!/^\d{3}$/.test(suff)){  
+        alert('Prefixo deve ter 3 dígitos');  
+        return;  
     }
     const full = '55'+suff;
 
@@ -194,11 +194,15 @@ btnSalvar.addEventListener('click', async ()=>{
     const dt = inDate.value ? new Date(inDate.value + 'T00:00:00') : new Date();
 
     try{
+        const user = auth.currentUser;
+        if(!user){ alert('Usuário não logado!'); return; }
+
         await db.collection('relatorios').add({
             prefixo: full,
             tipo: selectedType,
-            data: firebase.firestore.Timestamp.fromDate(dt),  // <<< usa a data do usuário
-            createdAt: firebase.firestore.FieldValue.serverTimestamp() // <<< metadado do servidor
+            data: firebase.firestore.Timestamp.fromDate(dt),
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            userEmail: user.email   // <<< salva o email do usuário logado
         });
 
         // limpa inputs
