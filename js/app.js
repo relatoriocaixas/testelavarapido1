@@ -386,8 +386,25 @@ btnExportWeek.addEventListener('click', async () => {
   XLSX.writeFile(wb, 'relatorio_semana.xlsx');
 });
 
-  // MONTHLY report (all prefixes)
-  async function loadMonthly(filter) {
+  // ======== LISTA DE PREFIXOS ========
+function allPrefixList() {
+  const arr = [];
+  for (let i = 1; i <= 559; i++) arr.push('55' + String(i).padStart(3, '0'));
+  for (let i = 900; i <= 1000; i++) arr.push('55' + String(i).padStart(3, '0'));
+  return arr;
+}
+
+// ======== MONTHLY REPORT ========
+const mPrefix = document.getElementById('mPrefix');
+const monthlyTable = document.getElementById('monthlyTable');
+
+document.getElementById('btnApplyMonthly').addEventListener('click', () => loadMonthly(mPrefix.value.trim()));
+document.getElementById('btnClearMonthly').addEventListener('click', () => { mPrefix.value = ''; loadMonthly(''); });
+document.getElementById('btnMonthlyXLS').addEventListener('click', exportMonthlyXLS);
+document.getElementById('btnMonthlyPDF').addEventListener('click', exportMonthlyPDF);
+document.getElementById('btnMonthlyPPT').addEventListener('click', exportMonthlyPPT);
+
+async function loadMonthly(filter) {
   monthlyTable.innerHTML = '<em>Carregando...</em>';
 
   const now = new Date();
