@@ -432,10 +432,13 @@ async function loadMonthly(filter) {
     const cls = prefixBadgeClass(parseInt(p));
     const tr = document.createElement('tr');
 
+    // ✅ MESMA LÓGICA DO WEEKLY / LOWWASH
     tr.innerHTML = `
-      <td class="prefix-cell">
-        <span class="text">${p}</span>
-        <span class="badge ${cls}"></span>
+      <td>
+        <div class="prefix-cell">
+          <span class="text">${p}</span>
+          <span class="badge ${cls}"></span>
+        </div>
       </td>
       <td>${counts[p] || 0}</td>
     `;
