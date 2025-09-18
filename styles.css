@@ -374,3 +374,15 @@ td.prefix-cell span.text {
   position: relative;
   z-index: 1;    /* texto sobre a badge */
 }
+/* --- Garantir que o texto fique na frente e o badge por baixo --- */
+.badge-below {
+  position: relative;      /* cria contexto de empilhamento */
+  display: inline-block;   /* acompanha o tamanho do texto */
+}
+
+.badge-below .badge {
+  position: absolute;      /* sai do fluxo e fica "colado" no container */
+  top: 0;                  /* mesma linha do texto */
+  left: 0;                 /* mesma coluna do texto */
+  z-index: -1;             /* JOGA para trás do texto */
+}
