@@ -427,19 +427,23 @@ async function loadMonthly(filter) {
   table.innerHTML = '<thead><tr><th>Prefixo</th><th>Total do mês</th></tr></thead>';
   const tb = document.createElement('tbody');
 
-  allPrefixList().forEach(p => {
+  const prefixes = [];
+  for(let i=1;i<=559;i++) prefixes.push('55'+String(i).padStart(3,'0'));
+  for(let i=900;i<=1000;i++) prefixes.push('55'+String(i).padStart(3,'0'));
+
+  prefixes.forEach(p => {
     if (filter && !p.includes(filter)) return;
 
     const cls = prefixBadgeClass(parseInt(p));
-
     const tr = document.createElement('tr');
+
     tr.innerHTML = `
-  <td class="prefix-cell">
-    <span class="text">${p}</span>
-    <span class="badge ${cls}"></span>
-  </td>
-  <td>${counts[p] || 0}</td>
-`;
+      <td class="prefix-cell">
+        <span class="text">${p}</span>
+        <span class="badge ${cls}"></span>
+      </td>
+      <td>${counts[p] || 0}</td>
+    `;
     tb.appendChild(tr);
   });
 
