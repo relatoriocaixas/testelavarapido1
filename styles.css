@@ -354,33 +354,22 @@ body {
 
 /* ===== badges atrás do texto nas tabelas (prefixos) ===== */
 .report-table td.prefix-cell {
-  position: relative;      /* necessário para posicionamento absoluto da badge */
-  padding: 6px 8px;
-  vertical-align: middle;
-  overflow: visible;
-}
+    position: relative;   /* cria contexto próprio */
+    z-index: 0;}
 
 .report-table td.prefix-cell .badge {
   position: absolute;
-  inset: 0;                /* top:0; right:0; bottom:0; left:0; */
-  border-radius: 8px;
-  opacity: 0.22;           /* ajuste a transparência aqui */
-  z-index: 0;              /* fica atrás do texto */
-  pointer-events: none;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 6px;
+    opacity: 0.3;         /* transparência desejada */
+    z-index: -1;
 }
 
 /* texto por cima da badge */
 .report-table td.prefix-cell .text {
-  position: relative;
-  z-index: 1;
-  display: inline-block;
-  padding: 4px 6px;
-  background: transparent; /* mantém legibilidade */
-}
-
-/* Se houver uma regra antiga que joga a badge pra trás com z-index:-1,
-   sobrescrevemos para evitar problemas */
-.badge-below .badge,
-td.prefix-cell .badge {
-  z-index: 0 !important;
+ position: relative;   /* texto em cima */
+    z-index: 1;
 }
