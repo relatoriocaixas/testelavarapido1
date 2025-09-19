@@ -406,12 +406,20 @@ document.getElementById('btnMonthlyPPT').addEventListener('click', exportMonthly
 
 // MONTHLY report (all prefixes)
 async function loadMonthly(filter) {
+  // garante que monthlyTable existe (se não tiver, defina const monthlyTable = document.getElementById('monthlyTable'); mais acima)
   monthlyTable.innerHTML = '<em>Carregando...</em>';
 
+  // lista de todos os prefixos (mesma lógica dos outros relatórios)
+  const prefixes = [];
+  for (let i = 1; i <= 559; i++) prefixes.push('55' + String(i).padStart(3, '0'));
+  for (let i = 900; i <= 1000; i++) prefixes.push('55' + String(i).padStart(3, '0'));
+
+  // mês atual
   const now = new Date();
   const start = new Date(now.getFullYear(), now.getMonth(), 1);
   const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
+  // pega contagem do Firestore (createdAt usado nos outros gráficos)
   const q = await db.collection('relatorios')
     .where('createdAt', '>=', firebase.firestore.Timestamp.fromDate(start))
     .where('createdAt', '<', firebase.firestore.Timestamp.fromDate(end))
@@ -423,20 +431,18 @@ async function loadMonthly(filter) {
     counts[v.prefixo] = (counts[v.prefixo] || 0) + 1;
   });
 
+  // monta tabela
   const table = document.createElement('table');
   table.innerHTML = '<thead><tr><th>Prefixo</th><th>Total do mês</th></tr></thead>';
   const tb = document.createElement('tbody');
 
-  const prefixes = [];
-  for(let i=1;i<=559;i++) prefixes.push('55'+String(i).padStart(3,'0'));
-  for(let i=900;i<=1000;i++) prefixes.push('55'+String(i).padStart(3,'0'));
-
   prefixes.forEach(p => {
     if (filter && !p.includes(filter)) return;
 
-    const cls = prefixBadgeClass(parseInt(p));
+    const cls = prefixBadgeClass(parseInt(p, 10));
     const tr = document.createElement('tr');
 
+    // mesma estrutura dos outros relatórios: prefix-cell + text + badge por baixo
     tr.innerHTML = `
       <td class="prefix-cell">
         <span class="text">${p}</span>
