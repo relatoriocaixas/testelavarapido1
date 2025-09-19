@@ -394,68 +394,62 @@ function allPrefixList() {
   return arr;
 }
 
-// ======== MONTHLY REPORT ========
-const mPrefix = document.getElementById('mPrefix');
+// ======== MONTHLY report (all prefixes) ========
 const monthlyTable = document.getElementById('monthlyTable');
+const mPrefix      = document.getElementById('mPrefix');
 
-document.getElementById('btnApplyMonthly').addEventListener('click', () => loadMonthly(mPrefix.value.trim()));
-document.getElementById('btnClearMonthly').addEventListener('click', () => { mPrefix.value = ''; loadMonthly(''); });
-document.getElementById('btnMonthlyXLS').addEventListener('click', exportMonthlyXLS);
-document.getElementById('btnMonthlyPDF').addEventListener('click', exportMonthlyPDF);
-document.getElementById('btnMonthlyPPT').addEventListener('click', exportMonthlyPPT);
+document.getElementById('btnApplyMonthly').addEventListener('click', () => {
+    loadMonthly(mPrefix.value.trim());
+});
+document.getElementById('btnClearMonthly').addEventListener('click', () => {
+    mPrefix.value = '';
+    loadMonthly('');
+});
 
-// MONTHLY report (all prefixes)
 async function loadMonthly(filter) {
-  // garante que monthlyTable existe (se não tiver, defina const monthlyTable = document.getElementById('monthlyTable'); mais acima)
-  monthlyTable.innerHTML = '<em>Carregando...</em>';
+    monthlyTable.innerHTML = '<em>Carregando...</em>';
 
-  // lista de todos os prefixos (mesma lógica dos outros relatórios)
-  const prefixes = [];
-  for (let i = 1; i <= 559; i++) prefixes.push('55' + String(i).padStart(3, '0'));
-  for (let i = 900; i <= 1000; i++) prefixes.push('55' + String(i).padStart(3, '0'));
+    const now   = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    const end   = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
-  // mês atual
-  const now = new Date();
-  const start = new Date(now.getFullYear(), now.getMonth(), 1);
-  const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const q = await db.collection('relatorios')
+        .where('createdAt', '>=', firebase.firestore.Timestamp.fromDate(start))
+        .where('createdAt', '<', firebase.firestore.Timestamp.fromDate(end))
+        .get();
 
-  // pega contagem do Firestore (createdAt usado nos outros gráficos)
-  const q = await db.collection('relatorios')
-    .where('createdAt', '>=', firebase.firestore.Timestamp.fromDate(start))
-    .where('createdAt', '<', firebase.firestore.Timestamp.fromDate(end))
-    .get();
+    const counts = {};
+    q.forEach(s => {
+        const v = s.data();
+        counts[v.prefixo] = (counts[v.prefixo] || 0) + 1;
+    });
 
-  const counts = {};
-  q.forEach(s => {
-    const v = s.data();
-    counts[v.prefixo] = (counts[v.prefixo] || 0) + 1;
-  });
+    // monta a tabela
+    const table = document.createElement('table');
+    table.innerHTML = '<thead><tr><th>Prefixo</th><th>Total do mês</th></tr></thead>';
 
-  // monta tabela
-  const table = document.createElement('table');
-  table.innerHTML = '<thead><tr><th>Prefixo</th><th>Total do mês</th></tr></thead>';
-  const tb = document.createElement('tbody');
+    const tb = document.createElement('tbody');
 
-  prefixes.forEach(p => {
-    if (filter && !p.includes(filter)) return;
+    allPrefixList().forEach(p => {
+        if (filter && !p.includes(filter)) return;
 
-    const cls = prefixBadgeClass(parseInt(p, 10));
-    const tr = document.createElement('tr');
+        const cls = prefixBadgeClass(parseInt(p));
+        const tr  = document.createElement('tr');
 
-    // mesma estrutura dos outros relatórios: prefix-cell + text + badge por baixo
-    tr.innerHTML = `
-      <td class="prefix-cell">
-        <span class="text">${p}</span>
-        <span class="badge ${cls}"></span>
-      </td>
-      <td>${counts[p] || 0}</td>
-    `;
-    tb.appendChild(tr);
-  });
+        // ✅ mesma estrutura usada no semanal e no “<2 lavagens”
+        tr.innerHTML = `
+            <td class="prefix-cell">
+                <span class="text">${p}</span>
+                <span class="badge ${cls}"></span>
+            </td>
+            <td>${counts[p] || 0}</td>
+        `;
+        tb.appendChild(tr);
+    });
 
-  table.appendChild(tb);
-  monthlyTable.innerHTML = '';
-  monthlyTable.appendChild(table);
+    table.appendChild(tb);
+    monthlyTable.innerHTML = '';
+    monthlyTable.appendChild(table);
 }
 
   async function exportMonthlyXLS(){
